@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>かさの けいさん ガッチャンコ！</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; }
+  body {
+    font-family:'Zen Maru Gothic','Hiragino Maru Gothic ProN','BIZ UDGothic',sans-serif;
+    background:#FDF6E3;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(168,216,234,.35) 0 90px, transparent 90px),
+      radial-gradient(circle at 85% 15%, rgba(255,214,165,.4) 0 70px, transparent 70px),
+      radial-gradient(circle at 80% 85%, rgba(183,228,199,.4) 0 100px, transparent 100px),
+      radial-gradient(circle at 10% 80%, rgba(255,183,197,.35) 0 80px, transparent 80px);
+    color:#4A3B32;
+    display:flex; justify-content:center;
+    min-height:100%;
+    padding:12px;
+    user-select:none;
+  }
+  #app { width:100%; max-width:560px; }
+
+  /* ---- 手描き風ボーダー ---- */
+  .wonky {
+    border:3px solid #5B4A3F;
+    border-radius:255px 18px 225px 18px / 18px 225px 18px 255px;
+    background:#FFFDF7;
+    box-shadow:3px 4px 0 rgba(91,74,63,.25);
+  }
+  .wonky2 {
+    border:3px solid #5B4A3F;
+    border-radius:18px 225px 18px 255px / 255px 18px 225px 18px;
+    background:#FFFDF7;
+    box-shadow:3px 4px 0 rgba(91,74,63,.25);
+  }
+
+  .screen { display:none; animation:pop .35s ease; }
+  .screen.show { display:block; }
+  @keyframes pop { from { opacity:0; transform:scale(.96) translateY(8px);} to { opacity:1; transform:none;} }
+
+  /* ---- 表紙 ---- */
+  #cover { text-align:center; padding-top:18px; }
+  .title-card { padding:26px 16px 22px; margin-bottom:22px; position:relative; overflow:hidden; }
+  .title-sub { font-size:15px; font-weight:700; color:#3E8FB0; letter-spacing:2px; }
+  .title-main {
+    font-size:34px; font-weight:900; line-height:1.35; margin:6px 0 4px;
+    color:#2B6E8F;
+    text-shadow:2px 2px 0 #C9E9F6;
+  }
+  .title-main .accent { color:#F08A5D; text-shadow:2px 2px 0 #FFE0CC; }
+  .drop-row { font-size:26px; letter-spacing:6px; margin-top:4px; }
+  .cup-svg { display:block; margin:10px auto 0; }
+
+  .mode-btn {
+    display:block; width:100%; margin:14px 0; padding:18px 16px;
+    font-family:inherit; font-size:24px; font-weight:900; color:#4A3B32;
+    cursor:pointer; text-align:center;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .mode-btn small { display:block; font-size:14px; font-weight:700; margin-top:4px; color:#7A6A5F; }
+  .mode-btn:active { transform:translate(2px,3px); box-shadow:1px 1px 0 rgba(91,74,63,.25); }
+  #btnCalc { background:#D2EDF9; }
+  #btnWord { background:#FFE8CC; }
+
+  /* ---- 共通ヘッダー ---- */
+  .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:8px; }
+  .back-btn {
+    font-family:inherit; font-size:15px; font-weight:700; color:#4A3B32;
+    background:#FFFDF7; border:3px solid #5B4A3F; border-radius:14px 4px 14px 4px;
+    padding:6px 12px; cursor:pointer; box-shadow:2px 2px 0 rgba(91,74,63,.25);
+  }
+  .back-btn:active { transform:translate(1px,2px); box-shadow:none; }
+  .prog { font-size:16px; font-weight:900; color:#2B6E8F; background:#D2EDF9; border:2px solid #5B4A3F; border-radius:999px; padding:4px 14px; }
+  .star-row { font-size:15px; letter-spacing:1px; min-height:20px; text-align:center; margin-bottom:8px; }
+
+  /* ---- 問題カード ---- */
+  .q-card { padding:20px 14px; text-align:center; margin-bottom:12px; position:relative; }
+  .q-label { display:inline-block; font-size:13px; font-weight:900; color:#fff; background:#3E8FB0; border-radius:999px; padding:2px 14px; margin-bottom:10px; }
+  .expr { font-size:30px; font-weight:900; line-height:1.6; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:4px; }
+  .expr .num { color:#2B6E8F; }
+  .expr .unit { font-size:22px; color:#4A3B32; margin-right:6px; }
+  .expr .op { color:#F08A5D; margin:0 8px; }
+
+  .slot {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:52px; height:56px; margin:0 2px;
+    border:3px dashed #B79F8F; border-radius:12px;
+    background:#FFF; font-size:30px; font-weight:900; color:#E4572E;
+    cursor:pointer; vertical-align:middle;
+  }
+  .slot.active { border:3px solid #F08A5D; background:#FFF3E8; animation:blink 1s infinite; }
+  @keyframes blink { 0%,100%{ box-shadow:0 0 0 3px rgba(240,138,93,.25);} 50%{ box-shadow:0 0 0 6px rgba(240,138,93,.05);} }
+  .slot.filled { border-style:solid; border-color:#5B4A3F; }
+  .slot.ok { background:#DDF5E3; border-color:#3FA36C; color:#2E7D4F; }
+  .slot.ng { animation:shake .4s; background:#FFE1E1; border-color:#D95757; }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+
+  /* ---- 文章題 ---- */
+  .story { font-size:20px; font-weight:700; line-height:2; text-align:left; padding:16px 18px; margin-bottom:12px; background:#FFFDF7; }
+  .story .kw { border-bottom:3px dotted transparent; border-radius:4px; padding:0 2px; transition:all .3s; }
+  .story .kw.show { background:#FFF3B0; border-bottom-color:#E0A800; }
+  .siki-area { padding:14px 10px; text-align:center; margin-bottom:12px; }
+  .siki-title { font-size:14px; font-weight:900; color:#7A6A5F; margin-bottom:8px; }
+  .siki-row { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:6px; font-size:26px; font-weight:900; }
+  .siki-slot {
+    min-width:96px; height:52px; padding:0 8px;
+    display:inline-flex; align-items:center; justify-content:center;
+    border:3px dashed #B79F8F; border-radius:12px; background:#fff;
+    font-size:22px; color:#2B6E8F; cursor:pointer;
+  }
+  .siki-slot.filled { border-style:solid; border-color:#5B4A3F; }
+  .siki-slot.op-slot { min-width:52px; color:#F08A5D; font-size:26px; }
+  .siki-eq { color:#4A3B32; margin:0 4px; }
+  .chip-row { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:14px; }
+  .chip {
+    font-family:inherit; font-size:20px; font-weight:900; color:#2B6E8F;
+    background:#D2EDF9; border:3px solid #5B4A3F; border-radius:255px 12px 225px 12px/12px 225px 12px 255px;
+    padding:8px 18px; cursor:pointer; box-shadow:2px 3px 0 rgba(91,74,63,.25);
+  }
+  .chip.op-chip { background:#FFE8CC; color:#E4572E; font-size:24px; padding:8px 22px; }
+  .chip:disabled { opacity:.35; cursor:default; box-shadow:none; }
+  .chip:not(:disabled):active { transform:translate(1px,2px); box-shadow:none; }
+  .mini-btn {
+    font-family:inherit; font-size:14px; font-weight:700; color:#7A6A5F;
+    background:#F1E8DC; border:2px solid #B79F8F; border-radius:999px;
+    padding:5px 14px; cursor:pointer; margin-top:12px;
+  }
+  .hint-btn {
+    font-family:inherit; font-size:16px; font-weight:900; color:#8A6D00;
+    background:#FFF3B0; border:3px solid #E0A800; border-radius:14px 4px 14px 4px;
+    padding:6px 16px; cursor:pointer; box-shadow:2px 2px 0 rgba(224,168,0,.35);
+  }
+  .hint-btn:active { transform:translate(1px,2px); box-shadow:none; }
+
+  /* ---- 数字パッド ---- */
+  #pad { margin-top:4px; }
+  .pad-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; max-width:420px; margin:0 auto; }
+  .pad-btn {
+    font-family:inherit; font-size:26px; font-weight:900; color:#4A3B32;
+    background:#FFFDF7; border:3px solid #5B4A3F; border-radius:14px;
+    padding:10px 0; cursor:pointer; box-shadow:0 3px 0 rgba(91,74,63,.3);
+  }
+  .pad-btn:active { transform:translateY(2px); box-shadow:0 1px 0 rgba(91,74,63,.3); }
+  .pad-btn.del { background:#FFE1E1; font-size:18px; }
+  .check-btn {
+    display:block; width:100%; max-width:420px; margin:12px auto 0;
+    font-family:inherit; font-size:22px; font-weight:900; color:#fff;
+    background:#3FA36C; border:3px solid #2E7D4F; border-radius:255px 14px 225px 14px/14px 225px 14px 255px;
+    padding:12px 0; cursor:pointer; box-shadow:0 4px 0 #2E7D4F;
+  }
+  .check-btn:active { transform:translateY(3px); box-shadow:0 1px 0 #2E7D4F; }
+  .check-btn:disabled { opacity:.4; box-shadow:none; cursor:default; }
+
+  /* ---- フィードバック ---- */
+  #fbCalc, #fbWord { min-height:34px; text-align:center; font-size:19px; font-weight:900; margin-top:10px; }
+  .fb-ok { color:#2E7D4F; }
+  .fb-ng { color:#D95757; }
+  .next-btn {
+    display:none; margin:8px auto 0; font-family:inherit; font-size:20px; font-weight:900;
+    color:#fff; background:#F08A5D; border:3px solid #C96A42;
+    border-radius:255px 14px 225px 14px/14px 225px 14px 255px;
+    padding:10px 34px; cursor:pointer; box-shadow:0 4px 0 #C96A42;
+  }
+  .next-btn.show { display:block; animation:pop .3s ease; }
+  .next-btn:active { transform:translateY(3px); box-shadow:0 1px 0 #C96A42; }
+
+  /* ---- ヒントモーダル ---- */
+  #hintModal {
+    display:none; position:fixed; inset:0; background:rgba(74,59,50,.45);
+    z-index:50; justify-content:center; align-items:center; padding:16px;
+  }
+  #hintModal.show { display:flex; }
+  .hint-card { max-width:440px; width:100%; padding:22px 18px; text-align:center; background:#FFFBEB; }
+  .hint-card h3 { font-size:20px; color:#8A6D00; margin-bottom:10px; }
+  .hint-body { font-size:18px; font-weight:700; line-height:1.9; }
+  .hint-actions { display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+
+  /* ---- 結果 ---- */
+  #result { text-align:center; padding-top:30px; }
+  .result-card { padding:30px 18px; }
+  .result-rank { font-size:46px; margin:8px 0; }
+  .result-rankname { font-size:28px; font-weight:900; color:#2B6E8F; margin-bottom:8px; }
+  .result-stars { font-size:26px; letter-spacing:3px; margin:10px 0; }
+  .result-score { font-size:18px; font-weight:700; color:#7A6A5F; }
+  .result-btns { margin-top:22px; display:flex; flex-direction:column; gap:12px; }
+  .result-btns button {
+    font-family:inherit; font-size:20px; font-weight:900; padding:12px; cursor:pointer;
+    color:#4A3B32;
+  }
+  .gacchan { display:inline-block; animation:gacchan .5s ease; }
+  @keyframes gacchan { 0%{transform:scale(.3) rotate(-15deg);} 60%{transform:scale(1.25) rotate(6deg);} 100%{transform:scale(1) rotate(0);} }
+
+  @media (max-width:400px) {
+    .title-main { font-size:28px; }
+    .expr { font-size:26px; }
+    .slot { width:46px; height:50px; font-size:26px; }
+    .story { font-size:18px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ========== 表紙 ========== -->
+  <div id="cover" class="screen show">
+    <div class="title-card wonky">
+      <div class="title-sub">〜 みずの かさ たしざん・ひきざん 〜</div>
+      <div class="title-main">かさの けいさん<br><span class="accent">ガッチャンコ！</span></div>
+      <div class="drop-row">💧🫗💧</div>
+      <svg class="cup-svg" width="90" height="80" viewBox="0 0 90 80" aria-hidden="true">
+        <path d="M18 8 L24 70 Q25 76 31 76 L59 76 Q65 76 66 70 L72 8 Z" fill="#EAF6FC" stroke="#5B4A3F" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M22 34 L25 68 Q26 73 31 73 L59 73 Q64 73 65 68 L68 34 Q45 44 22 34 Z" fill="#8ED1EE"/>
+        <line x1="24" y1="20" x2="34" y2="20" stroke="#5B4A3F" stroke-width="2.5"/>
+        <line x1="23" y1="34" x2="33" y2="34" stroke="#5B4A3F" stroke-width="2.5"/>
+        <line x1="25" y1="48" x2="35" y2="48" stroke="#5B4A3F" stroke-width="2.5"/>
+        <line x1="26" y1="62" x2="36" y2="62" stroke="#5B4A3F" stroke-width="2.5"/>
+        <circle cx="40" cy="52" r="2.5" fill="#5B4A3F"/>
+        <circle cx="54" cy="52" r="2.5" fill="#5B4A3F"/>
+        <path d="M42 60 Q47 64 52 60" fill="none" stroke="#5B4A3F" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <button id="btnCalc" class="mode-btn wonky">🔢 けいさん もんだい<small>しきを けいさんしよう（ぜんぶで 10もん）</small></button>
+    <button id="btnWord" class="mode-btn wonky2">📖 ぶんしょうだい<small>よんで しきを つくろう（ぜんぶで 6もん）</small></button>
+  </div>
+
+  <!-- ========== 計算問題 ========== -->
+  <div id="calc" class="screen">
+    <div class="topbar">
+      <button class="back-btn" data-goto="cover">← もどる</button>
+      <div class="prog" id="calcProg">1/10</div>
+    </div>
+    <div class="star-row" id="calcStars"></div>
+    <div class="q-card wonky">
+      <span class="q-label">けいさんしよう！</span>
+      <div class="expr" id="calcExpr"></div>
+    </div>
+    <div id="calcPad"></div>
+    <div id="fbCalc"></div>
+    <button class="next-btn" id="calcNext">つぎへ ➡</button>
+  </div>
+
+  <!-- ========== 文章題 ========== -->
+  <div id="word" class="screen">
+    <div class="topbar">
+      <button class="back-btn" data-goto="cover">← もどる</button>
+      <button class="hint-btn" id="hintBtn">💡 ヒント</button>
+      <div class="prog" id="wordProg">1/6</div>
+    </div>
+    <div class="star-row" id="wordStars"></div>
+    <div class="story wonky2" id="storyText"></div>
+    <div class="siki-area wonky">
+      <div class="siki-title">✏️ しきを つくって こたえよう</div>
+      <div class="siki-row" id="sikiRow"></div>
+      <div class="chip-row" id="chipRow"></div>
+      <button class="mini-btn" id="sikiReset">🔄 しきを やりなおす</button>
+    </div>
+    <div id="wordPad"></div>
+    <div id="fbWord"></div>
+    <button class="next-btn" id="wordNext">つぎへ ➡</button>
+  </div>
+
+  <!-- ========== 結果 ========== -->
+  <div id="result" class="screen">
+    <div class="result-card wonky">
+      <div style="font-size:18px;font-weight:900;color:#7A6A5F;">🎉 けっか はっぴょう 🎉</div>
+      <div class="result-rank gacchan" id="resultEmoji">🏆</div>
+      <div class="result-rankname" id="resultRank"></div>
+      <div class="result-stars" id="resultStars"></div>
+      <div class="result-score" id="resultScore"></div>
+      <div class="result-btns">
+        <button class="wonky" id="retryBtn" style="background:#D2EDF9;">🔁 もういちど</button>
+        <button class="wonky2" data-goto="cover" style="background:#FFE8CC;">🏠 ひょうしに もどる</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ヒントモーダル -->
+<div id="hintModal">
+  <div class="hint-card wonky">
+    <h3 id="hintTitle">💡 ヒント 1</h3>
+    <div class="hint-body" id="hintBody"></div>
+    <div class="hint-actions">
+      <button class="hint-btn" id="moreHint">💡💡 もっと ヒント</button>
+      <button class="mini-btn" id="closeHint">とじる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ================= サウンド (Web Audio API) ================= */
+let audioCtx = null;
+function ac() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function tone(freq, start, dur, type, vol) {
+  const ctx = ac(); if (!ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type || 'square';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.12, ctx.currentTime + start);
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(ctx.currentTime + start);
+  o.stop(ctx.currentTime + start + dur + 0.05);
+}
+const snd = {
+  tap()   { tone(660, 0, .07, 'square', .08); },
+  ok()    { tone(784, 0, .12, 'square', .12); tone(1175, .12, .22, 'square', .12); },
+  ng()    { tone(196, 0, .25, 'sawtooth', .1); },
+  fanfare(){ [523,659,784,1047].forEach((f,i)=>tone(f, i*.13, .22, 'square', .12)); tone(1319,.55,.5,'triangle',.12); },
+  chip()  { tone(880, 0, .08, 'triangle', .12); }
+};
+
+/* ================= ユーティリティ ================= */
+const $ = id => document.getElementById(id);
+function ri(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function shuffle(a) { const b = a.slice(); for (let i=b.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]]; } return b; }
+function fmt(q) {
+  if (q.l > 0 && q.d > 0) return q.l + 'L' + q.d + 'dL';
+  if (q.l > 0) return q.l + 'L';
+  return q.d + 'dL';
+}
+function fmtSp(q) {
+  if (q.l > 0 && q.d > 0) return q.l + 'L ' + q.d + 'dL';
+  if (q.l > 0) return q.l + 'L';
+  return q.d + 'dL';
+}
+function starRow(stars, total) {
+  let s = '';
+  for (let i=0;i<total;i++) s += i < stars.length ? (stars[i] ? '⭐' : '⚪') : '・';
+  return s;
+}
+
+/* ================= 画面切りかえ ================= */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('show'));
+  $(id).classList.add('show');
+}
+document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => { snd.tap(); showScreen(b.dataset.goto); }));
+
+/* ================= 数字パッド(共通) ================= */
+function buildPad(container, onDigit, onDel, onCheck) {
+  container.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'pad-grid';
+  for (let n=1; n<=9; n++) {
+    const b = document.createElement('button');
+    b.className = 'pad-btn'; b.textContent = n;
+    b.addEventListener('click', () => { snd.tap(); onDigit(n); });
+    wrap.appendChild(b);
+  }
+  const zero = document.createElement('button');
+  zero.className = 'pad-btn'; zero.textContent = '0';
+  zero.addEventListener('click', () => { snd.tap(); onDigit(0); });
+  wrap.appendChild(zero);
+  container.appendChild(wrap);
+  const del = document.createElement('button');
+  del.className = 'pad-btn del'; del.textContent = '⌫ けす';
+  del.style.cssText = 'display:block;margin:8px auto 0;width:140px;';
+  del.addEventListener('click', () => { snd.tap(); onDel(); });
+  container.appendChild(del);
+  const chk = document.createElement('button');
+  chk.className = 'check-btn'; chk.textContent = '✅ こたえあわせ';
+  chk.addEventListener('click', onCheck);
+  container.appendChild(chk);
+  return { checkBtn: chk };
+}
+
+/* スロット管理 */
+function makeSlots(answer) {
+  // answer: {l, d}  → 必要なスロットの並びを返す
+  const keys = [];
+  if (answer.l > 0 && answer.d > 0) { keys.push('l','d'); }
+  else if (answer.l > 0) { keys.push('l'); }
+  else { keys.push('d'); }
+  return keys;
+}
+
+/* ================= 計算問題 ================= */
+const CALC_TOTAL = 10;
+let calcState = null;
+
+function genCalcProblem() {
+  const add = Math.random() < 0.5;
+  if (add) {
+    const kind = ri(1, 4);
+    let A, B;
+    if (kind === 1) {        // aL bdL + cL
+      A = { l: ri(1,5), d: ri(1,9) }; B = { l: ri(1, 9-A.l), d: 0 };
+    } else if (kind === 2) { // aL + cL ddL
+      B = { l: ri(1,5), d: ri(1,9) }; A = { l: ri(1, 9-B.l), d: 0 };
+    } else if (kind === 3) { // aL bdL + cdL
+      A = { l: ri(1,7), d: ri(1,8) }; B = { l: 0, d: ri(1, 9-A.d) };
+    } else {                 // aL bdL + cL ddL
+      A = { l: ri(1,5), d: ri(1,8) }; B = { l: ri(1, 9-A.l), d: ri(1, 9-A.d) };
+    }
+    return { A, B, op:'+', ans:{ l:A.l+B.l, d:A.d+B.d } };
+  } else {
+    const kind = ri(1, 3);
+    let A, B;
+    if (kind === 1) {        // aL bdL - cL
+      A = { l: ri(2,9), d: ri(1,9) }; B = { l: ri(1, A.l-1), d: 0 };
+    } else if (kind === 2) { // aL bdL - cdL
+      A = { l: ri(1,9), d: ri(2,9) }; B = { l: 0, d: ri(1, A.d) };
+    } else {                 // aL bdL - cL ddL
+      A = { l: ri(2,9), d: ri(2,9) }; B = { l: ri(1, A.l-1), d: ri(1, A.d-1) };
+    }
+    return { A, B, op:'-', ans:{ l:A.l-B.l, d:A.d-B.d } };
+  }
+}
+
+function startCalc() {
+  calcState = { idx:0, stars:[], problems:[], firstTry:true, done:false,
+    slots:[], slotKeys:[], active:0, values:{} };
+  for (let i=0;i<CALC_TOTAL;i++) calcState.problems.push(genCalcProblem());
+  showScreen('calc');
+  renderCalc();
+}
+
+function numSpan(q) {
+  let h = '';
+  if (q.l > 0) h += '<span class="num">' + q.l + '</span><span class="unit">L</span>';
+  if (q.d > 0) h += '<span class="num">' + q.d + '</span><span class="unit">dL</span>';
+  if (q.l === 0 && q.d === 0) h += '<span class="num">0</span>';
+  return h;
+}
+
+function renderCalc() {
+  const st = calcState;
+  const p = st.problems[st.idx];
+  st.firstTry = true; st.done = false; st.values = {}; st.active = 0;
+  $('calcProg').textContent = (st.idx+1) + '/' + CALC_TOTAL;
+  $('calcStars').textContent = starRow(st.stars, CALC_TOTAL);
+  $('fbCalc').textContent = '';
+  $('calcNext').classList.remove('show');
+
+  st.slotKeys = makeSlots(p.ans);
+  let html = numSpan(p.A) + '<span class="op">' + (p.op==='+'?'＋':'−') + '</span>' + numSpan(p.B) + '<span class="op" style="color:#4A3B32;">＝</span>';
+  st.slotKeys.forEach(k => {
+    html += '<span class="slot" data-k="' + k + '"></span><span class="unit">' + (k==='l'?'L':'dL') + '</span>';
+  });
+  $('calcExpr').innerHTML = html;
+  st.slots = Array.from($('calcExpr').querySelectorAll('.slot'));
+  st.slots.forEach((el, i) => el.addEventListener('click', () => { snd.tap(); st.active = i; updCalcSlots(); }));
+  updCalcSlots();
+}
+
+function updCalcSlots() {
+  const st = calcState;
+  st.slots.forEach((el, i) => {
+    const k = st.slotKeys[i];
+    el.textContent = (k in st.values) ? st.values[k] : '';
+    el.classList.toggle('filled', k in st.values);
+    el.classList.toggle('active', i === st.active && !st.done);
+  });
+}
+
+function calcDigit(n) {
+  const st = calcState; if (st.done) return;
+  st.values[st.slotKeys[st.active]] = n;
+  if (st.active < st.slots.length - 1) st.active++;
+  updCalcSlots();
+}
+function calcDel() {
+  const st = calcState; if (st.done) return;
+  const k = st.slotKeys[st.active];
+  if (k in st.values) { delete st.values[k]; }
+  else if (st.active > 0) { st.active--; delete st.values[st.slotKeys[st.active]]; }
+  updCalcSlots();
+}
+function calcCheck() {
+  const st = calcState; if (st.done) return;
+  const p = st.problems[st.idx];
+  if (st.slotKeys.some(k => !(k in st.values))) { snd.ng(); $('fbCalc').innerHTML = '<span class="fb-ng">こたえを ぜんぶ いれてね</span>'; return; }
+  const okL = !st.slotKeys.includes('l') || st.values.l === p.ans.l;
+  const okD = !st.slotKeys.includes('d') || st.values.d === p.ans.d;
+  if (okL && okD) {
+    snd.ok();
+    st.done = true;
+    st.stars.push(st.firstTry);
+    st.slots.forEach(el => { el.classList.remove('active','ng'); el.classList.add('ok'); });
+    $('fbCalc').innerHTML = '<span class="fb-ok gacchan" style="display:inline-block;">🎉 ガッチャンコ！せいかい！</span>';
+    $('calcStars').textContent = starRow(st.stars, CALC_TOTAL);
+    $('calcNext').classList.add('show');
+  } else {
+    snd.ng();
+    st.firstTry = false;
+    st.slots.forEach(el => { el.classList.remove('ng'); void el.offsetWidth; el.classList.add('ng'); });
+    $('fbCalc').innerHTML = '<span class="fb-ng">おしい！おなじ たんいどうしを けいさんしよう</span>';
+    setTimeout(() => st.slots.forEach(el => el.classList.remove('ng')), 500);
+  }
+}
+$('calcNext').addEventListener('click', () => {
+  snd.tap();
+  calcState.idx++;
+  if (calcState.idx >= CALC_TOTAL) finish(calcState.stars, CALC_TOTAL, 'calc');
+  else renderCalc();
+});
+
+/* ================= 文章題 ================= */
+const WORD_TOTAL = 6;
+let wordState = null;
+
+const WORD_TEMPLATES = [
+  { op:'+', kw:'あわせて',
+    text:(x,y)=>`やかんに みずが 【${x}】 はいって います。すいとうには 【${y}】 はいって います。みずは ◆あわせて◆ どれだけ ありますか。`,
+    hint1:'「あわせて」の ことばが あるね。あわせる ときは <b style="color:#E4572E;">たしざん</b> だよ！' },
+  { op:'+', kw:'ぜんぶで',
+    text:(x,y)=>`あさ ぎゅうにゅうを 【${x}】 のみました。よるは 【${y}】 のみました。◆ぜんぶで◆ どれだけ のみましたか。`,
+    hint1:'「ぜんぶで」の ことばが あるね。ぜんぶ あつめる ときは <b style="color:#E4572E;">たしざん</b> だよ！' },
+  { op:'+', kw:'あわせて',
+    text:(x,y)=>`おおきい ペットボトルに 【${x}】、ちいさい ペットボトルに 【${y}】 の ジュースが はいって います。◆あわせて◆ どれだけ ありますか。`,
+    hint1:'「あわせて」の ことばが あるね。あわせる ときは <b style="color:#E4572E;">たしざん</b> だよ！' },
+  { op:'-', kw:'のこり',
+    text:(x,y)=>`バケツに みずが 【${x}】 はいって います。そうじで 【${y}】 つかいました。◆のこり◆は どれだけですか。`,
+    hint1:'「のこり」の ことばが あるね。のこりを もとめる ときは <b style="color:#3E8FB0;">ひきざん</b> だよ！' },
+  { op:'-', kw:'ちがい',
+    text:(x,y)=>`おおきい なべには 【${x}】、ちいさい なべには 【${y}】 の みずが はいります。かさの ◆ちがい◆は どれだけですか。`,
+    hint1:'「ちがい」の ことばが あるね。ちがいを もとめる ときは <b style="color:#3E8FB0;">ひきざん</b> だよ！おおきい かずから ひこう。' },
+  { op:'-', kw:'のこり',
+    text:(x,y)=>`ポットに おちゃが 【${x}】 はいって います。コップに 【${y}】 つぎました。◆のこり◆は どれだけですか。`,
+    hint1:'「のこり」の ことばが あるね。のこりを もとめる ときは <b style="color:#3E8FB0;">ひきざん</b> だよ！' }
+];
+
+function genWordQty(op) {
+  if (op === '+') {
+    const kind = ri(1,3);
+    let X, Y;
+    if (kind === 1) { X = { l:ri(1,4), d:ri(1,8) }; Y = { l:ri(1, 9-X.l), d:0 }; }
+    else if (kind === 2) { X = { l:ri(1,5), d:ri(1,8) }; Y = { l:0, d:ri(1, 9-X.d) }; }
+    else { X = { l:ri(1,4), d:ri(1,8) }; Y = { l:ri(1, 9-X.l), d:ri(1, 9-X.d) }; }
+    return { X, Y, ans:{ l:X.l+Y.l, d:X.d+Y.d } };
+  } else {
+    const kind = ri(1,3);
+    let X, Y;
+    if (kind === 1) { X = { l:ri(2,8), d:ri(1,9) }; Y = { l:ri(1, X.l-1), d:0 }; }
+    else if (kind === 2) { X = { l:ri(1,8), d:ri(2,9) }; Y = { l:0, d:ri(1, X.d-1) }; }
+    else { X = { l:ri(2,8), d:ri(2,9) }; Y = { l:ri(1, X.l-1), d:ri(1, X.d-1) }; }
+    return { X, Y, ans:{ l:X.l-Y.l, d:X.d-Y.d } };
+  }
+}
+
+function startWord() {
+  const order = shuffle(WORD_TEMPLATES);
+  wordState = { idx:0, stars:[], problems:[], firstTry:true, done:false,
+    siki:{ a:null, op:null, b:null }, slots:[], slotKeys:[], active:0, values:{}, hintLevel:0 };
+  for (let i=0;i<WORD_TOTAL;i++) {
+    const t = order[i % order.length];
+    const q = genWordQty(t.op);
+    wordState.problems.push({ tpl:t, X:q.X, Y:q.Y, ans:q.ans });
+  }
+  showScreen('word');
+  renderWord();
+}
+
+function renderWord() {
+  const st = wordState;
+  const p = st.problems[st.idx];
+  st.firstTry = true; st.done = false; st.hintLevel = 0;
+  st.siki = { a:null, op:null, b:null };
+  st.values = {}; st.active = 0;
+  $('wordProg').textContent = (st.idx+1) + '/' + WORD_TOTAL;
+  $('wordStars').textContent = starRow(st.stars, WORD_TOTAL);
+  $('fbWord').textContent = '';
+  $('wordNext').classList.remove('show');
+
+  // 問題文(キーワードは span 化、【】内は太字数値)
+  let html = p.tpl.text(fmtSp(p.X), fmtSp(p.Y));
+  html = html.replace(/◆(.+?)◆/g, '<span class="kw">$1</span>');
+  html = html.replace(/【(.+?)】/g, '<b style="color:#2B6E8F;">$1</b>');
+  $('storyText').innerHTML = html;
+
+  // 式スロット + 答えスロット
+  st.slotKeys = makeSlots(p.ans);
+  let siki = '<span class="siki-slot" data-s="a"></span>' +
+             '<span class="siki-slot op-slot" data-s="op"></span>' +
+             '<span class="siki-slot" data-s="b"></span>' +
+             '<span class="siki-eq">＝</span>';
+  st.slotKeys.forEach(k => {
+    siki += '<span class="slot" data-k="' + k + '"></span><span class="unit" style="font-size:20px;">' + (k==='l'?'L':'dL') + '</span>';
+  });
+  $('sikiRow').innerHTML = siki;
+  st.slots = Array.from($('sikiRow').querySelectorAll('.slot'));
+  st.slots.forEach((el, i) => el.addEventListener('click', () => { snd.tap(); st.active = i; updWordSlots(); }));
+  $('sikiRow').querySelectorAll('.siki-slot').forEach(el => {
+    el.addEventListener('click', () => {
+      if (st.done) return;
+      const s = el.dataset.s;
+      if (st.siki[s] !== null) { snd.tap(); st.siki[s] = null; updSiki(); }
+    });
+  });
+
+  // チップ(数量2つ + 演算子2つ)
+  const chips = shuffle([ { t:fmtSp(p.X), v:'X' }, { t:fmtSp(p.Y), v:'Y' } ]);
+  let ch = '';
+  chips.forEach(c => { ch += '<button class="chip qty-chip" data-v="' + c.v + '">' + c.t + '</button>'; });
+  ch += '<button class="chip op-chip" data-v="+">＋</button><button class="chip op-chip" data-v="-">−</button>';
+  $('chipRow').innerHTML = ch;
+  $('chipRow').querySelectorAll('.chip').forEach(el => el.addEventListener('click', () => chipTap(el)));
+  updSiki();
+  updWordSlots();
+}
+
+function chipTap(el) {
+  const st = wordState; if (st.done) return;
+  const v = el.dataset.v;
+  snd.chip();
+  if (v === '+' || v === '-') {
+    st.siki.op = v;
+  } else {
+    if (st.siki.a === null) st.siki.a = v;
+    else if (st.siki.b === null && st.siki.a !== v) st.siki.b = v;
+    else if (st.siki.b === null && st.siki.a === v) { /* 同じチップ2回 → 入れかえ */ st.siki.a = v; }
+  }
+  updSiki();
+}
+
+function updSiki() {
+  const st = wordState;
+  const p = st.problems[st.idx];
+  const label = v => v === 'X' ? fmtSp(p.X) : fmtSp(p.Y);
+  $('sikiRow').querySelectorAll('.siki-slot').forEach(el => {
+    const s = el.dataset.s;
+    let val = st.siki[s];
+    if (s === 'op') el.textContent = val === '+' ? '＋' : val === '-' ? '−' : '';
+    else el.textContent = val ? label(val) : '';
+    el.classList.toggle('filled', st.siki[s] !== null);
+  });
+  // 使用済みチップを無効化
+  $('chipRow').querySelectorAll('.qty-chip').forEach(c => {
+    c.disabled = (st.siki.a === c.dataset.v || st.siki.b === c.dataset.v);
+  });
+}
+
+$('sikiReset').addEventListener('click', () => {
+  snd.tap();
+  const st = wordState; if (!st || st.done) return;
+  st.siki = { a:null, op:null, b:null };
+  updSiki();
+});
+
+function updWordSlots() {
+  const st = wordState;
+  st.slots.forEach((el, i) => {
+    const k = st.slotKeys[i];
+    el.textContent = (k in st.values) ? st.values[k] : '';
+    el.classList.toggle('filled', k in st.values);
+    el.classList.toggle('active', i === st.active && !st.done);
+  });
+}
+function wordDigit(n) {
+  const st = wordState; if (st.done) return;
+  st.values[st.slotKeys[st.active]] = n;
+  if (st.active < st.slots.length - 1) st.active++;
+  updWordSlots();
+}
+function wordDel() {
+  const st = wordState; if (st.done) return;
+  const k = st.slotKeys[st.active];
+  if (k in st.values) { delete st.values[k]; }
+  else if (st.active > 0) { st.active--; delete st.values[st.slotKeys[st.active]]; }
+  updWordSlots();
+}
+function wordCheck() {
+  const st = wordState; if (st.done) return;
+  const p = st.problems[st.idx];
+  // 式チェック
+  if (st.siki.a === null || st.siki.op === null || st.siki.b === null) {
+    snd.ng(); $('fbWord').innerHTML = '<span class="fb-ng">まず しきを つくろう(チップを タップ！)</span>'; return;
+  }
+  const opOK = st.siki.op === p.tpl.op;
+  const orderOK = p.tpl.op === '+' ? true : (st.siki.a === 'X' && st.siki.b === 'Y');
+  if (!opOK) {
+    snd.ng(); st.firstTry = false;
+    $('fbWord').innerHTML = '<span class="fb-ng">しきが ちがうよ。もんだいの ことばを よく よもう(💡ヒントも みてね)</span>';
+    return;
+  }
+  if (!orderOK) {
+    snd.ng(); st.firstTry = false;
+    $('fbWord').innerHTML = '<span class="fb-ng">ひきざんは おおきい かずから ひくよ！</span>';
+    return;
+  }
+  // 答えチェック
+  if (st.slotKeys.some(k => !(k in st.values))) {
+    snd.ng(); $('fbWord').innerHTML = '<span class="fb-ng">こたえも いれてね</span>'; return;
+  }
+  const okL = !st.slotKeys.includes('l') || st.values.l === p.ans.l;
+  const okD = !st.slotKeys.includes('d') || st.values.d === p.ans.d;
+  if (okL && okD) {
+    snd.ok();
+    st.done = true;
+    st.stars.push(st.firstTry);
+    st.slots.forEach(el => { el.classList.remove('active'); el.classList.add('ok'); });
+    $('fbWord').innerHTML = '<span class="fb-ok gacchan" style="display:inline-block;">🎉 ガッチャンコ！しきも こたえも せいかい！</span>';
+    $('wordStars').textContent = starRow(st.stars, WORD_TOTAL);
+    $('wordNext').classList.add('show');
+  } else {
+    snd.ng();
+    st.firstTry = false;
+    st.slots.forEach(el => { el.classList.remove('ng'); void el.offsetWidth; el.classList.add('ng'); });
+    $('fbWord').innerHTML = '<span class="fb-ng">しきは あってるよ！けいさんを もういちど たしかめよう</span>';
+    setTimeout(() => st.slots.forEach(el => el.classList.remove('ng')), 500);
+  }
+}
+$('wordNext').addEventListener('click', () => {
+  snd.tap();
+  wordState.idx++;
+  if (wordState.idx >= WORD_TOTAL) finish(wordState.stars, WORD_TOTAL, 'word');
+  else renderWord();
+});
+
+/* ---- ヒント ---- */
+const HINT2 = '<div style="margin-bottom:8px;">おなじ たんいどうしを けいさんしよう！</div>' +
+  '<svg width="200" height="90" viewBox="0 0 200 90"><path d="M20 8 L26 74 Q27 80 33 80 L61 80 Q67 80 68 74 L74 8 Z" fill="#EAF6FC" stroke="#5B4A3F" stroke-width="3"/><path d="M24 30 L28 72 Q29 77 33 77 L61 77 Q65 77 66 72 L70 30 Q47 40 24 30 Z" fill="#8ED1EE"/><text x="47" y="55" font-size="16" font-weight="bold" text-anchor="middle" fill="#2B6E8F">1L</text><text x="135" y="40" font-size="18" font-weight="bold" fill="#4A3B32">1L＝10dL</text><text x="112" y="68" font-size="15" font-weight="bold" fill="#E4572E">Lどうし</text><text x="112" y="86" font-size="15" font-weight="bold" fill="#3E8FB0">dLどうし</text></svg>' +
+  '<div style="margin-top:8px;">Lは Lどうし、dLは dLどうし けいさんするよ。</div>';
+
+$('hintBtn').addEventListener('click', () => {
+  snd.tap();
+  const st = wordState; if (!st) return;
+  st.hintLevel = 1;
+  $('hintTitle').textContent = '💡 ヒント 1';
+  $('hintBody').innerHTML = st.problems[st.idx].tpl.hint1;
+  const kw = $('storyText').querySelector('.kw');
+  if (kw) kw.classList.add('show');
+  $('moreHint').style.display = '';
+  $('hintModal').classList.add('show');
+});
+$('moreHint').addEventListener('click', () => {
+  snd.tap();
+  $('hintTitle').textContent = '💡💡 ヒント 2';
+  $('hintBody').innerHTML = HINT2;
+  $('moreHint').style.display = 'none';
+});
+$('closeHint').addEventListener('click', () => { snd.tap(); $('hintModal').classList.remove('show'); });
+$('hintModal').addEventListener('click', e => { if (e.target === $('hintModal')) $('hintModal').classList.remove('show'); });
+
+/* ================= 結果 ================= */
+let lastMode = 'calc';
+function finish(stars, total, mode) {
+  lastMode = mode;
+  const score = stars.filter(Boolean).length;
+  const rate = score / total;
+  let emoji, rank;
+  if (rate === 1)      { emoji = '🏆'; rank = 'かさはかせ！パーフェクト！'; snd.fanfare(); }
+  else if (rate >= .8) { emoji = '🌟'; rank = 'すごい！あと ちょっと！'; snd.fanfare(); }
+  else if (rate >= .5) { emoji = '😊'; rank = 'よく がんばったね！'; snd.ok(); }
+  else                 { emoji = '🌱'; rank = 'れんしゅうすれば だいじょうぶ！'; snd.ok(); }
+  $('resultEmoji').textContent = emoji;
+  $('resultEmoji').classList.remove('gacchan'); void $('resultEmoji').offsetWidth; $('resultEmoji').classList.add('gacchan');
+  $('resultRank').textContent = rank;
+  $('resultStars').textContent = starRow(stars, total);
+  $('resultScore').textContent = 'いちどで せいかい：' + score + ' ／ ' + total + ' もん';
+  showScreen('result');
+}
+$('retryBtn').addEventListener('click', () => { snd.tap(); if (lastMode === 'calc') startCalc(); else startWord(); });
+
+/* ================= 起動 ================= */
+buildPad($('calcPad'), calcDigit, calcDel, calcCheck);
+buildPad($('wordPad'), wordDigit, wordDel, wordCheck);
+$('btnCalc').addEventListener('click', () => { snd.tap(); startCalc(); });
+$('btnWord').addEventListener('click', () => { snd.tap(); startWord(); });
+</script>
+</body>
+</html>
